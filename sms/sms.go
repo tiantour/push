@@ -13,6 +13,6 @@ type (
 )
 
 func init() {
-	alidayu.AppKey = conf.Options.Alidayu.AppKey
-	alidayu.AppSecret = conf.Options.Alidayu.AppSecret
+	alidayu.AppKey = conf.Data.Alidayu.AppKey
+	alidayu.AppSecret = conf.Data.Alidayu.AppSecret
 }
