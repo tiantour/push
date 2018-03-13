@@ -39,14 +39,32 @@ type (
 		PartnerID    string `json:"partner_id" url:"partner_id,omitempty"`         // 否 合伙伙伴
 		Simplify     string `json:"simplify" url:"simplify,omitempty"`             // 否 精简json
 	}
+
 	// Response response
 	Response struct {
-		AlibabaAliqinFcSmsNumSendResponse interface{} `json:"alibaba_aliqin_fc_sms_num_send_response"` // 正确
-		ErrResponse                       interface{} `json:"err_response"`                            // 错误
+		AlibabaAliqinFcSmsNumSendResponse Success `json:"alibaba_aliqin_fc_sms_num_send_response"` // 正确
+		ErrResponse                       Fail    `json:"err_response"`                            // 错误
 	}
-	// SMS sms
-	SMS struct{}
+
+	// Success success
+	Success struct {
+		ErrCode string `json:"err_code"` // 返回错误
+		Model   string `json:"model"`    // 返回结果
+		Success bool   `json:"success"`  // 返回状态
+		Msg     string `json:"message"`  // 返回描述
+	}
+
+	// Fail fail
+	Fail struct {
+		SubMsg  string `json:"sub_msg"`  // 错误信息
+		SubCode string `json:"sub_code"` // 错误解释
+		Code    int    `json:"code"`     // 错误代码
+		Msg     string `json:"message"`  // 错误描述
+	}
 )
+
+// SMS sms
+type SMS struct{}
 
 // NewSMS new sms
 func NewSMS() *SMS {
@@ -54,32 +72,32 @@ func NewSMS() *SMS {
 }
 
 // Body body
-func (s *SMS) Body(args interface{}) ([]byte, error) {
-	body, err := s.Sign(args)
+func (s *SMS) do(args interface{}) (*Response, error) {
+	str, err := s.sign(args)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
-	header := http.Header{}
-	header.Add("Content-Type", "application/x-www-form-urlencoded")
-	result, err := fetch.Cmd(fetch.Request{
+	body, err := fetch.Cmd(fetch.Request{
 		Method: "POST",
 		URL:    "https://eco.taobao.com/router/rest",
-		Body:   []byte(body),
-		Header: header,
+		Body:   []byte(str),
+		Header: http.Header{
+			"Content-Type": []string{"application/x-www-form-urlencoded"},
+		},
 	})
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
-	response := Response{}
-	err = json.Unmarshal(result, &response)
-	if err != nil || response.ErrResponse != nil {
-		return []byte{}, errors.New(string(result))
+	result := Response{}
+	err = json.Unmarshal(body, &result)
+	if err != nil || result.ErrResponse.Code != 0 {
+		return nil, errors.New(result.ErrResponse.Msg)
 	}
-	return result, nil
+	return &result, nil
 }
 
-// Sign sign
-func (s *SMS) Sign(args interface{}) (string, error) {
+// sign sign
+func (s *SMS) sign(args interface{}) (string, error) {
 	params, err := query.Values(args)
 	if err != nil {
 		return "", err
@@ -88,11 +106,7 @@ func (s *SMS) Sign(args interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sign := fmt.Sprintf("%s%s%s",
-		AppSecret,
-		query,
-		AppSecret,
-	)
+	sign := fmt.Sprintf("%s%s%s", AppSecret, query, AppSecret)
 	sign = strings.Replace(sign, "&", "", -1)
 	sign = strings.Replace(sign, "=", "", -1)
 	sign = strings.ToUpper(rsae.NewMD5().Encode(sign))
