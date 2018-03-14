@@ -14,7 +14,7 @@ type (
 		SmsParam        string `json:"sms_param" url:"sms_param,omitempty"`                   // 否 模板变量
 		RecNum          string `json:"rec_num" url:"rec_num,omitempty"`                       // 是 接收号码，英文逗号分割，最大200
 		SmsTemplateCode string `json:"sms_template_code" url:"sms_template_code,omitempty"`   // 是 模板ID
-		*Request
+		Request
 	}
 
 	// Query query
@@ -24,7 +24,7 @@ type (
 		QueryDate   string `json:"query_date" url:"query_date,omitempty"`     // 是 日期 20170525
 		CurrentPage int    `json:"current_page" url:"current_page,omitempty"` // 是 页码
 		PageSize    int    `json:"page_size" url:"page_size,omitempty"`       // 是 数量
-		*Request
+		Request
 	}
 )
 
@@ -51,7 +51,7 @@ func (m *Message) Send(args *Message) (*Response, error) {
 		SmsParam:        string(args.Body),
 		RecNum:          args.Phone,
 		SmsTemplateCode: args.Template,
-		Request: &Request{
+		Request: Request{
 			Method:     "alibaba.aliqin.fc.sms.num.send",
 			AppKey:     AppKey,
 			SignMethod: "md5",
@@ -70,7 +70,7 @@ func (m *Message) Query(args *Message) (*Response, error) {
 		QueryDate:   strings.Replace(args.Date, "-", "", -1),
 		CurrentPage: args.Page,
 		PageSize:    args.Size,
-		Request: &Request{
+		Request: Request{
 			Method:     "alibaba.aliqin.fc.sms.num.query",
 			AppKey:     AppKey,
 			SignMethod: "md5",
