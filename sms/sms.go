@@ -42,8 +42,12 @@ type (
 
 	// Response response
 	Response struct {
-		AlibabaAliqinFcSmsNumSendResponse Success `json:"alibaba_aliqin_fc_sms_num_send_response"` // 正确
-		ErrResponse                       Fail    `json:"err_response"`                            // 错误
+		AlibabaAliqinFcSmsNumSendResponse Result `json:"alibaba_aliqin_fc_sms_num_send_response"` // 正确
+		ErrResponse                       Fail   `json:"err_response"`                            // 错误
+	}
+	// Result result
+	Result struct {
+		Result Success `json:"result"` // 结果
 	}
 
 	// Success success
