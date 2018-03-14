@@ -43,7 +43,7 @@ type (
 	// Response response
 	Response struct {
 		AlibabaAliqinFcSmsNumSendResponse Result `json:"alibaba_aliqin_fc_sms_num_send_response"` // 正确
-		ErrResponse                       Fail   `json:"err_response"`                            // 错误
+		ErrResponse                       Fail   `json:"error_response"`                          // 错误
 	}
 	// Result result
 	Result struct {
@@ -63,7 +63,7 @@ type (
 		SubMsg  string `json:"sub_msg"`  // 错误信息
 		SubCode string `json:"sub_code"` // 错误解释
 		Code    int    `json:"code"`     // 错误代码
-		Msg     string `json:"message"`  // 错误描述
+		Msg     string `json:"msg"`      // 错误描述
 	}
 )
 
@@ -76,10 +76,10 @@ func NewSMS() *SMS {
 }
 
 // Body body
-func (s *SMS) do(args interface{}) (*Response, error) {
+func (s *SMS) do(args interface{}) error {
 	str, err := s.sign(args)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	body, err := fetch.Cmd(fetch.Request{
 		Method: "POST",
@@ -90,14 +90,17 @@ func (s *SMS) do(args interface{}) (*Response, error) {
 		},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	result := Response{}
 	err = json.Unmarshal(body, &result)
-	if err != nil || result.ErrResponse.Code != 0 {
-		return nil, errors.New(result.ErrResponse.Msg)
+	if err != nil {
+		return err
 	}
-	return &result, nil
+	if result.ErrResponse.Code != 0 {
+		return errors.New(result.ErrResponse.SubMsg)
+	}
+	return nil
 }
 
 // sign sign

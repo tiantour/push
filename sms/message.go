@@ -44,7 +44,7 @@ func NewMessage() *Message {
 }
 
 // Send send
-func (m *Message) Send(args *Message) (*Response, error) {
+func (m *Message) Send(args *Message) error {
 	data := &Send{
 		SmsType:         "normal",
 		SmsFreeSignName: Sign,
@@ -64,7 +64,7 @@ func (m *Message) Send(args *Message) (*Response, error) {
 }
 
 // Query query message
-func (m *Message) Query(args *Message) (*Response, error) {
+func (m *Message) Query(args *Message) error {
 	data := &Query{
 		RecNum:      args.Phone,
 		QueryDate:   strings.Replace(args.Date, "-", "", -1),
