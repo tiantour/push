@@ -28,27 +28,27 @@ func NewMessage() *Message {
 }
 
 // OA oa
-func (m *Message) OA(body []byte) (*Message, error) {
+func (m *Message) OA(body []byte) error {
 	token, err := NewToken().Access()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=%s", token)
 	return m.do(body, url)
 }
 
 // MP mp
-func (m *Message) MP(body []byte) (*Message, error) {
+func (m *Message) MP(body []byte) error {
 	token, err := NewToken().Access()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=%s", token)
 	return m.do(body, url)
 }
 
 // do
-func (m *Message) do(body []byte, url string) (*Message, error) {
+func (m *Message) do(body []byte, url string) error {
 	result := Message{}
 	body, err := fetch.Cmd(fetch.Request{
 		Method: "POST",
@@ -56,14 +56,14 @@ func (m *Message) do(body []byte, url string) (*Message, error) {
 		Body:   body,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if result.ErrCode != 0 {
-		return nil, errors.New(result.ErrMsg)
+		return errors.New(result.ErrMsg)
 	}
-	return &result, nil
+	return nil
 }
