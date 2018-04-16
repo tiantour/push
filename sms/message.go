@@ -60,11 +60,12 @@ func (m *Message) Send(args *Message) error {
 			V:          "2.0",
 		},
 	}
-	return NewSMS().do(data)
+	_, err := NewSMS().do(data)
+	return err
 }
 
 // Query query message
-func (m *Message) Query(args *Message) error {
+func (m *Message) Query(args *Message) (*Response, error) {
 	data := &Query{
 		RecNum:      args.Phone,
 		QueryDate:   strings.Replace(args.Date, "-", "", -1),
@@ -79,5 +80,6 @@ func (m *Message) Query(args *Message) error {
 			V:          "2.0",
 		},
 	}
-	return NewSMS().do(data)
+	result, err := NewSMS().do(data)
+	return result, err
 }

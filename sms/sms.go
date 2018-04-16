@@ -42,8 +42,9 @@ type (
 
 	// Response response
 	Response struct {
-		AlibabaAliqinFcSmsNumSendResponse Result `json:"alibaba_aliqin_fc_sms_num_send_response"` // 正确
-		ErrResponse                       Fail   `json:"error_response"`                          // 错误
+		AlibabaAliqinFcSmsNumSendResponse  Result `json:"alibaba_aliqin_fc_sms_num_send_response"`  // 正确
+		AlibabaAliqinFcSmsNumQueryResponse Value  `json:"alibaba_aliqin_fc_sms_num_query_response"` //
+		ErrResponse                        Fail   `json:"error_response"`                           // 错误
 	}
 	// Result result
 	Result struct {
@@ -65,6 +66,30 @@ type (
 		Code    int    `json:"code"`     // 错误代码
 		Msg     string `json:"msg"`      // 错误描述
 	}
+
+	// Value value
+	Value struct {
+		CurrentPage int     `json:"current_page"` // 当前页码
+		PageSize    int     `json:"page_size"`    // 每页数量
+		TotalCount  int     `json:"total_count"`  // 总量
+		TotalPage   int     `json:"total_page"`   // 总页数
+		Values      Partner `json:"values"`
+	}
+	// Partner partner
+	Partner struct {
+		FcPartnerSmsDetailDto []Detail `json:"fc_partner_sms_detail_dto"`
+	}
+	// Detail detail
+	Detail struct {
+		Extend          string `json:"extend"`            // 公共回传参数
+		RecNum          string `json:"rec_num"`           // 短信接收号码
+		ResultCode      string `json:"result_code"`       // 短信错误码
+		SMSCode         string `json:"sms_code"`          // 模板编码
+		SMSContent      string `json:"sms_content"`       // 短信发送内容
+		SMSReceiverTime string `json:"sms_receiver_time"` // 短信接收时间
+		SMSSendTime     string `json:"sms_send_time"`     // 短信发送时间
+		SMSStatus       int    `json:"sms_status"`        // 发送状态 1：等待回执，2：发送失败，3：发送成功
+	}
 )
 
 // SMS sms
@@ -76,10 +101,10 @@ func NewSMS() *SMS {
 }
 
 // Body body
-func (s *SMS) do(args interface{}) error {
+func (s *SMS) do(args interface{}) (*Response, error) {
 	str, err := s.sign(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	body, err := fetch.Cmd(fetch.Request{
 		Method: "POST",
@@ -90,17 +115,17 @@ func (s *SMS) do(args interface{}) error {
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	result := Response{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if result.ErrResponse.Code != 0 {
-		return errors.New(result.ErrResponse.SubMsg)
+		return nil, errors.New(result.ErrResponse.SubMsg)
 	}
-	return nil
+	return &result, nil
 }
 
 // sign sign
