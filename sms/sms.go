@@ -123,7 +123,7 @@ func (s *SMS) do(args interface{}) (*Response, error) {
 		return nil, err
 	}
 	if result.ErrResponse.Code != 0 {
-		return nil, errors.New(result.ErrResponse.SubMsg)
+		return nil, errors.New(result.ErrResponse.Msg)
 	}
 	return &result, nil
 }
