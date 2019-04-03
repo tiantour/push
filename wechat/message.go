@@ -47,6 +47,16 @@ func (m *Message) MP(body []byte) error {
 	return m.do(body, url)
 }
 
+// UNI uni
+func (m *Message) UNI(body []byte) error {
+	token, err := NewToken().Access()
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/wxopen/template/uniform_send?access_token=%s", token)
+	return m.do(body, url)
+}
+
 // do
 func (m *Message) do(body []byte, url string) error {
 	result := Message{}
