@@ -1,6 +1,7 @@
 package sms
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -30,7 +31,7 @@ type (
 
 // Message message
 type Message struct {
-	Phone    string `json:"phone"`    // 号码
+	Phone    int64  `json:"phone"`    // 号码
 	Template string `json:"template"` // 模板
 	Body     []byte `json:"data"`     // 内容
 	Date     string `json:"date"`     // 日期
@@ -44,12 +45,12 @@ func NewMessage() *Message {
 }
 
 // Send send
-func (m *Message) Send(args *Message) error {
+func (m *Message) Send(args *Message) (*Response, error) {
 	data := &Send{
 		SmsType:         "normal",
 		SmsFreeSignName: Sign,
 		SmsParam:        string(args.Body),
-		RecNum:          args.Phone,
+		RecNum:          fmt.Sprintf("%d", args.Phone),
 		SmsTemplateCode: args.Template,
 		Request: Request{
 			Method:     "alibaba.aliqin.fc.sms.num.send",
@@ -60,14 +61,13 @@ func (m *Message) Send(args *Message) error {
 			V:          "2.0",
 		},
 	}
-	_, err := NewSMS().do(data)
-	return err
+	return NewSMS().do(data)
 }
 
 // Query query message
 func (m *Message) Query(args *Message) (*Response, error) {
 	data := &Query{
-		RecNum:      args.Phone,
+		RecNum:      fmt.Sprintf("%d", args.Phone),
 		QueryDate:   strings.Replace(args.Date, "-", "", -1),
 		CurrentPage: args.Page,
 		PageSize:    args.Size,
@@ -80,6 +80,5 @@ func (m *Message) Query(args *Message) (*Response, error) {
 			V:          "2.0",
 		},
 	}
-	result, err := NewSMS().do(data)
-	return result, err
+	return NewSMS().do(data)
 }
