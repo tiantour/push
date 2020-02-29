@@ -2,6 +2,7 @@ package alipay
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -42,7 +43,7 @@ func (t *Token) Access(code string) (*Response, error) {
 		return nil, err
 	}
 	url := fmt.Sprintf("https://openapi.alipay.com/gateway.do?%s", sign)
-	body, err := fetch.Cmd(fetch.Request{
+	body, err := fetch.Cmd(&fetch.Request{
 		Method: "GET",
 		URL:    url,
 	})
@@ -51,7 +52,14 @@ func (t *Token) Access(code string) (*Response, error) {
 	}
 	result := Result{}
 	err = json.Unmarshal(body, &result)
-	return &result.AlipaySystemOauthTokenResponse, err
+	if err != nil {
+		return nil, err
+	}
+	response := result.AlipaySystemOauthTokenResponse
+	if response.Code != "10000" {
+		return nil, errors.New(response.Msg)
+	}
+	return response, err
 }
 
 // Sign trade sign

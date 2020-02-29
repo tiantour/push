@@ -9,14 +9,6 @@ import (
 	"github.com/tiantour/fetch"
 )
 
-/*
-
-获取access_token
-
-https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140183
-
-*/
-
 // Token token
 type Token struct {
 	AccessToken  string `json:"access_token"`  // 网页授权接口调用凭证,注意：此access_token与基础支持的access_token不同
@@ -56,7 +48,7 @@ func (t *Token) Access() (string, error) {
 // do do
 func (t *Token) do(url string) (*Token, error) {
 	result := Token{}
-	body, err := fetch.Cmd(fetch.Request{
+	body, err := fetch.Cmd(&fetch.Request{
 		Method: "GET",
 		URL:    url,
 	})

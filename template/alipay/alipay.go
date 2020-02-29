@@ -1,14 +1,5 @@
 package alipay
 
-import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/google/go-querystring/query"
-	"github.com/tiantour/fetch"
-	"github.com/tiantour/tempo"
-)
-
 var (
 	// AppID appid
 	AppID string
@@ -21,8 +12,6 @@ var (
 )
 
 type (
-	// Message message
-	Message struct{}
 	// Request request
 	Request struct {
 		AppID        string `json:"app_id,omitempty" url:"app_id,omitempty"`                 // 是 应用ID
@@ -40,6 +29,7 @@ type (
 		RefreshToken string `json:"refresh_token,omitempty" url:"refresh_token,omitempty"`   // 否 刷新令牌
 		BizContent   string `json:"biz_content,omitempty" url:"biz_content,omitempty"`       // 请求参数的集合
 	}
+
 	// Response response
 	Response struct {
 		Code    string `json:"code,omitempty"`     // 是 网关返回码
@@ -49,6 +39,7 @@ type (
 		Sign    string `json:"sign,omitempty"`     // 是 签名
 		*Next
 	}
+
 	// Next next
 	Next struct {
 		UserID       string `json:"alipay_user_id,omitempty"` // 是 支付宝用户的唯一userId
@@ -57,48 +48,11 @@ type (
 		RefreshToken string `json:"refresh_token,omitempty"`  // 是 刷新令牌。通过该令牌可以刷新access_token
 		ReExpiresIn  int32  `json:"re_expires_in,omitempty"`  // 是 刷新令牌的有效时间，单位是秒。
 	}
+
 	// Result result
 	Result struct {
-		AlipaySystemOauthTokenResponse               Response `json:"alipay_system_oauth_token_response,omitempty"`                 // 内容
-		AlipayOpenAppMiniTemplateMessageSendResponse Response `json:"alipay_open_app_mini_templatemessage_send_response,omitempty"` // 内容
-		Sign                                         string   `json:"sign,omitempty"`                                               // 签名
+		AlipaySystemOauthTokenResponse               *Response `json:"alipay_system_oauth_token_response,omitempty"`                 // 内容
+		AlipayOpenAppMiniTemplateMessageSendResponse *Response `json:"alipay_open_app_mini_templatemessage_send_response,omitempty"` // 内容
+		Sign                                         string    `json:"sign,omitempty"`                                               // 签名
 	}
 )
-
-// NewMessage new message
-func NewMessage() *Message {
-	return &Message{}
-}
-
-// MI qrcode
-func (m *Message) MI(content string) (*Response, error) {
-	args := &Request{
-		AppID:      AppID,
-		Method:     "alipay_open_app_mini_templatemessage_send_response",
-		Format:     "JSON",
-		Charset:    "utf-8",
-		SignType:   "RSA2",
-		TimeStamp:  tempo.NewNow().String(),
-		Version:    "1.0",
-		BizContent: content,
-	}
-	tmp, err := query.Values(args)
-	if err != nil {
-		return nil, err
-	}
-	sign, err := NewToken().Sign(&tmp, PrivatePath)
-	if err != nil {
-		return nil, err
-	}
-	url := fmt.Sprintf("https://openapi.alipay.com/gateway.do?%s", sign)
-	body, err := fetch.Cmd(fetch.Request{
-		Method: "GET",
-		URL:    url,
-	})
-	if err != nil {
-		return nil, err
-	}
-	result := Result{}
-	err = json.Unmarshal(body, &result)
-	return &result.AlipayOpenAppMiniTemplateMessageSendResponse, err
-}
