@@ -34,11 +34,11 @@ func (t *Token) Access(code string) (*Response, error) {
 		GrantType: "authorization_code",
 		Code:      code,
 	}
-	tmp, err := query.Values(args)
+	signURL, err := query.Values(args)
 	if err != nil {
 		return nil, err
 	}
-	sign, err := t.Sign(&tmp, PrivatePath)
+	sign, err := t.Sign(signURL, PrivatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (t *Token) Access(code string) (*Response, error) {
 }
 
 // Sign trade sign
-func (t *Token) Sign(args *url.Values, privatePath string) (string, error) {
+func (t *Token) Sign(args url.Values, privatePath string) (string, error) {
 	query, err := url.QueryUnescape(args.Encode())
 	if err != nil {
 		return "", err

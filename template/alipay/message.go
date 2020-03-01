@@ -34,7 +34,7 @@ func (m *Message) MI(content string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	sign, err := NewToken().Sign(&signURL, PrivatePath)
+	sign, err := NewToken().Sign(signURL, PrivatePath)
 	if err != nil {
 		return nil, err
 	}

@@ -35,14 +35,14 @@ func (m *Message) Query(args *Message) ([]*QueryMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	requst := QueryRequest{
+	requst := &QueryRequest{
 		Mobile:   args.Phone[0],
 		Start:    fmt.Sprintf("%d", start),
 		End:      fmt.Sprintf("%d", end),
 		Page:     args.Page + 1,
 		PageSize: args.Size,
 	}
-	query, err := query.Values(&requst)
+	signURL, err := query.Values(requst)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (m *Message) Query(args *Message) ([]*QueryMessage, error) {
 	}
 	data := fetch.Request{
 		Method: "GET",
-		URL:    "https://sms.qiniuapi.com/v1/message?" + query.Encode(),
+		URL:    "https://sms.qiniuapi.com/v1/message?" + signURL.Encode(),
 		Header: header,
 	}
 	sign, err := NewSMS().Sign(&data)
