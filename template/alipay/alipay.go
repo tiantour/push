@@ -3,12 +3,8 @@ package alipay
 var (
 	// AppID appid
 	AppID string
-	// AesKey aes key
-	AesKey string
 	// PrivatePath private path
 	PrivatePath string
-	// PublicPath public path
-	PublicPath string
 )
 
 type (

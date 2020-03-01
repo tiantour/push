@@ -8,14 +8,6 @@ import (
 	"github.com/tiantour/fetch"
 )
 
-var (
-	// AppID appid
-	AppID string
-
-	// AppSecret app secret
-	AppSecret string
-)
-
 // Message message
 type Message struct {
 	ErrCode int    `json:"errcode"` // 错误代码
@@ -48,18 +40,7 @@ func (m *Message) MP(args *MP) (*Message, error) {
 	return m.do(args, url)
 }
 
-// UNI uni message
-func (m *Message) UNI(args *UNI) (*Message, error) {
-	token, err := NewToken().Access()
-	if err != nil {
-		return nil, err
-	}
-	return m.do(args, fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/wxopen/template/uniform_send?access_token=%s",
-		token),
-	)
-}
-
-// do
+// do do message
 func (m *Message) do(data interface{}, url string) (*Message, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
@@ -73,6 +54,7 @@ func (m *Message) do(data interface{}, url string) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	result := Message{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {

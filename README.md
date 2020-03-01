@@ -92,7 +92,68 @@ alipay
 
 wechat
 
-	// next todo
-	wechat.NewMessage().MI()
-	wechat.NewMessage().MP()
-	wechat.NewMessage().UNI()
+	```
+	package main
+
+	import (
+		"fmt"
+
+		"github.com/tiantour/push/template/wechat"
+	)
+
+	func main() {
+		mi()
+		mp()
+	}
+
+	func mi() {
+		wechat.AppID = "your AppID"
+		wechat.AppSecret = "your AppSecret"
+
+		data := map[string]*wechat.Option{
+			"first": &wechat.Option{
+				Value: "恭喜你发布成功",
+			},
+			"keyword1": &wechat.Option{
+				Value: "发布文章",
+			},
+			"keyword2": &wechat.Option{
+				Value: "2020-03-01",
+			},
+			"remark": &wechat.Option{
+				Value: "欢迎再次购买",
+			},
+		}
+		result, err := wechat.NewMessage().MP(&wechat.MP{
+			ToUser:     "your openid",
+			TemplateID: "your template id",
+			URL:        "your page url",
+			Data:       data,
+		})
+		fmt.Println(result, err)
+	}
+	
+	func mp() {
+		data := map[string]*wechat.Option{
+			"thing1": &wechat.Option{
+				Value: "test",
+			},
+			"amount2": &wechat.Option{
+				Value: "￥0.01",
+			},
+			"date3": &wechat.Option{
+				Value: "2020-03-01",
+			},
+			"thing4": &wechat.Option{
+				Value: "remark",
+			},
+		}
+		result, err := wechat.NewMessage().MI(&wechat.MI{
+			ToUser:     "your openid",
+			TemplateID: "your template id",
+			Page:       "your page path",
+			Data:       data,
+		})
+		fmt.Println(result, err)
+	}
+	```

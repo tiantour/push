@@ -74,23 +74,3 @@ func (t *Token) Sign(args *url.Values, privatePath string) (string, error) {
 	}
 	return rsae.NewRSA().Sign(query, privateKey)
 }
-
-// Verify verify
-func (t *Token) Verify(args url.Values, publicPath string) error {
-	sign := args.Get("sign")
-	args.Del("sign")
-	args.Del("sign_type")
-	query, err := url.QueryUnescape(args.Encode())
-	if err != nil {
-		return err
-	}
-	publicKey, err := imago.NewFile().Read(publicPath)
-	if err != nil {
-		return err
-	}
-	ok, err := rsae.NewRSA().Verify(query, sign, publicKey)
-	if !ok {
-		return err
-	}
-	return nil
-}

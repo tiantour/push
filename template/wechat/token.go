@@ -45,9 +45,8 @@ func (t *Token) Access() (string, error) {
 	return token, nil
 }
 
-// do do
+// do do token
 func (t *Token) do(url string) (*Token, error) {
-	result := Token{}
 	body, err := fetch.Cmd(&fetch.Request{
 		Method: "GET",
 		URL:    url,
@@ -55,6 +54,8 @@ func (t *Token) do(url string) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	result := Token{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return nil, err
