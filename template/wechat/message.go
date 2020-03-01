@@ -28,40 +28,44 @@ func NewMessage() *Message {
 }
 
 // MI mi message
-func (m *Message) MI(body []byte) (*Message, error) {
+func (m *Message) MI(args *MI) (*Message, error) {
 	token, err := NewToken().Access()
 	if err != nil {
 		return nil, err
 	}
-	return m.do(body, fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=%s",
+	return m.do(args, fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=%s",
 		token),
 	)
 }
 
 // MP mp message
-func (m *Message) MP(body []byte) (*Message, error) {
+func (m *Message) MP(args *MP) (*Message, error) {
 	token, err := NewToken().Access()
 	if err != nil {
 		return nil, err
 	}
 	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=%s", token)
-	return m.do(body, url)
+	return m.do(args, url)
 }
 
 // UNI uni message
-func (m *Message) UNI(body []byte) (*Message, error) {
+func (m *Message) UNI(args *UNI) (*Message, error) {
 	token, err := NewToken().Access()
 	if err != nil {
 		return nil, err
 	}
-	return m.do(body, fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/wxopen/template/uniform_send?access_token=%s",
+	return m.do(args, fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/wxopen/template/uniform_send?access_token=%s",
 		token),
 	)
 }
 
 // do
-func (m *Message) do(body []byte, url string) (*Message, error) {
-	body, err := fetch.Cmd(&fetch.Request{
+func (m *Message) do(data interface{}, url string) (*Message, error) {
+	body, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	body, err = fetch.Cmd(&fetch.Request{
 		Method: "POST",
 		URL:    url,
 		Body:   body,

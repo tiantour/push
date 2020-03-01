@@ -3,9 +3,9 @@ package wechat
 type (
 	// UNI uni message
 	UNI struct {
-		ToUser           string  `json:"touser,omitempty"`                    // 是	接收者（用户）的 openid
-		WeappTemplateMsg *Webapp `json:"weapp_template_msg,omitempty"`        // 否 小程序模板消息相关的信息，可以参考小程序模板消息接口; 有此节点则优先发送小程序模板消息
-		MpTemplateMsg    *MP     `json:"mp_template_msg,omitempty,omitempty"` // 是 公众号模板消息相关的信息，可以参考公众号模板消息接口；有此节点并且没有weapp_template_msg节点时，发送公众号模板消息
+		ToUser           string  `json:"touser,omitempty"`             // 是	接收者（用户）的 openid
+		WeappTemplateMsg *Webapp `json:"weapp_template_msg,omitempty"` // 否 小程序模板消息相关的信息，可以参考小程序模板消息接口; 有此节点则优先发送小程序模板消息
+		MpTemplateMsg    *MP     `json:"mp_template_msg,omitempty"`    // 是 公众号模板消息相关的信息，可以参考公众号模板消息接口；有此节点并且没有weapp_template_msg节点时，发送公众号模板消息
 	}
 
 	// Webapp miniprogram message

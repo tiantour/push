@@ -38,8 +38,9 @@ func (m *Message) MI(content string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	signURL.Add("sign", sign)
 	result, err := m.do(fmt.Sprintf("https://openapi.alipay.com/gateway.do?%s",
-		sign),
+		signURL.Encode()),
 	)
 	if err != nil {
 		return nil, err

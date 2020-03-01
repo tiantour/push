@@ -72,12 +72,7 @@ func (t *Token) Sign(args *url.Values, privatePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sign, err := rsae.NewRSA().Sign(query, privateKey)
-	if err != nil {
-		return "", err
-	}
-	args.Add("sign", sign)
-	return args.Encode(), nil
+	return rsae.NewRSA().Sign(query, privateKey)
 }
 
 // Verify verify
