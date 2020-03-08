@@ -58,6 +58,7 @@ func (t *Token) Network() (*Token, error) {
 			AppSecret,
 		),
 	})
+	fmt.Println(1, string(body), err)
 	if err != nil {
 		return nil, err
 	}
