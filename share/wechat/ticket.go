@@ -58,7 +58,6 @@ func (t *Ticket) Network() (*Ticket, error) {
 			token,
 		),
 	})
-	fmt.Println(2, string(body), err)
 	if err != nil {
 		return nil, err
 	}

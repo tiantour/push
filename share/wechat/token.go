@@ -28,7 +28,7 @@ func NewToken() *Token {
 // Access access token
 func (t *Token) Access() (string, error) {
 	result, err := t.Cache()
-	if err != nil || result != "" {
+	if err != nil || result == "" {
 		token, err := t.Network()
 		if err != nil {
 			return "", err
@@ -58,7 +58,6 @@ func (t *Token) Network() (*Token, error) {
 			AppSecret,
 		),
 	})
-	fmt.Println(1, string(body), err)
 	if err != nil {
 		return nil, err
 	}
