@@ -25,7 +25,7 @@ func NewTicket() *Ticket {
 // JSAPI jsapi ticket
 func (t *Ticket) JSAPI() (string, error) {
 	result, err := t.Cache()
-	if err != nil {
+	if err != nil || result == "" {
 		ticket, err := t.Network()
 		if err != nil {
 			return "", err
