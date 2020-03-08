@@ -28,7 +28,7 @@ func NewToken() *Token {
 // Access access token
 func (t *Token) Access() (string, error) {
 	result, err := t.Cache()
-	if err != nil {
+	if err != nil || result != "" {
 		token, err := t.Network()
 		if err != nil {
 			return "", err
