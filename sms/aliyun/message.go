@@ -3,7 +3,6 @@ package aliyun
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -106,9 +105,7 @@ func (m *Message) Send(args *Message) (*Response, error) {
 		return nil, err
 	}
 	sign := NewSMS().Sign(signURL)
-	fmt.Println("sign")
 	signURL.Add("Signature", sign)
-	fmt.Println(signURL.Encode())
 
 	body, err = fetch.Cmd(&fetch.Request{
 		Method: "POST",
@@ -117,14 +114,12 @@ func (m *Message) Send(args *Message) (*Response, error) {
 			"Content-Type": []string{"application/json"},
 		},
 	})
-	fmt.Println(string(body), err)
 	if err != nil {
 		return nil, err
 	}
 
 	result := SendResponse{}
 	err = json.Unmarshal(body, &result)
-	fmt.Println(result, err)
 	if err != nil {
 		return nil, err
 	}
