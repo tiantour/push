@@ -54,5 +54,7 @@ type (
 	SendResponse struct {
 		JobID     string `json:"job_id,omitempty"`     // 否 发送任务返回的 id
 		MessageID string `json:"message_id,omitempty"` // 否 单条短信发送接口返回的 id
+		Error     string `json:"error,omitempty"`      // 否 错提提示
+		Message   string `json:"message,omitempty"`    // 否 错误描述
 	}
 )
