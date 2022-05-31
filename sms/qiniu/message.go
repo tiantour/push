@@ -2,6 +2,7 @@ package qiniu
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -119,6 +120,13 @@ func (m *Message) Send(args *Message) (*SendResponse, error) {
 
 	result := SendResponse{}
 	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Error != "" {
+		return nil, errors.New(result.Message)
+	}
 	return &result, err
 
 }
