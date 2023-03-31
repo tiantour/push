@@ -1,12 +1,12 @@
 package wechat
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/tiantour/cache"
-	"github.com/tiantour/fetch"
+	"github.com/duke-git/lancet/v2/netutil"
+	"github.com/tiantour/push/x/cache"
 )
 
 // Token token
@@ -27,46 +27,41 @@ func NewToken() *Token {
 
 // Access access token
 func (t *Token) Access() (string, error) {
-	result, err := t.Cache()
-	if err != nil || result == "" {
-		token, err := t.Network()
-		if err != nil {
-			return "", err
-		}
-
-		result = token.AccessToken
-		key := fmt.Sprintf("string:data:bind:access:token:%s", AppID)
-		_ = cache.NewString().SET(nil, key, result, "EX", 7200)
+	token, ok := cache.NewString().Get(AppID)
+	if ok && token != "" {
+		return token.(string), nil
 	}
-	return result, nil
+
+	result, err := t.Get()
+	if err != nil {
+		return "", err
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	_ = cache.NewString().Set(AppID, result.AccessToken, 1, 7200*time.Second)
+	return result.AccessToken, nil
 }
 
-// Cache get token from cache
-func (t *Token) Cache() (string, error) {
-	var result string
-	key := fmt.Sprintf("string:data:bind:access:token:%s", AppID)
-	err := cache.NewString().GET(&result, key)
-	return result, err
-}
-
-// Network get token from network
-func (t *Token) Network() (*Token, error) {
-	body, err := fetch.Cmd(&fetch.Request{
+// Get get token
+func (t *Token) Get() (*Token, error) {
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", AppID, AppSecret),
 		Method: "GET",
-		URL: fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s",
-			AppID,
-			AppSecret,
-		),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	result := Token{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
+
 	if result.ErrCode != 0 {
 		return nil, errors.New(result.ErrMsg)
 	}

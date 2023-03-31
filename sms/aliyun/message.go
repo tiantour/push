@@ -3,13 +3,14 @@ package aliyun
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/duke-git/lancet/v2/netutil"
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/google/go-querystring/query"
-	"github.com/tiantour/fetch"
-	"github.com/tiantour/imago"
 )
 
 // Message message
@@ -29,7 +30,6 @@ func NewMessage() *Message {
 
 // Query query message
 func (m *Message) Query(args *Message) ([]*QueryResponseItem, error) {
-	now := time.Now().In(time.FixedZone("GMT", 0)).Format("2006-01-02T15:04:05Z")
 	data := &QueryRequest{
 		AccessKeyID: AccessKeyID,
 		Action:      "QuerySendDetails",
@@ -40,8 +40,8 @@ func (m *Message) Query(args *Message) ([]*QueryResponseItem, error) {
 		Request: Request{
 			Format:           "JSON",
 			Version:          "2017-05-25",
-			Timestamp:        now,
-			SignatureNonce:   imago.NewRandom().Text(32),
+			Timestamp:        time.Now().In(time.FixedZone("GMT", 0)).Format("2006-01-02T15:04:05Z"),
+			SignatureNonce:   random.RandString(32),
 			SignatureMethod:  "HMAC-SHA1",
 			SignatureVersion: "1.0",
 			RegionID:         "cn-hangzhou",
@@ -52,22 +52,28 @@ func (m *Message) Query(args *Message) ([]*QueryResponseItem, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	sign := NewSMS().Sign(signURL)
 	signURL.Add("Signature", sign)
 
-	body, err := fetch.Cmd(&fetch.Request{
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: fmt.Sprintf("https://dysmsapi.aliyuncs.com?%s", signURL.Encode()),
 		Method: "POST",
-		URL:    "https://dysmsapi.aliyuncs.com?" + signURL.Encode(),
+		Headers: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	result := QueryResponse{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
+
 	if result.Code != "OK" {
 		return nil, errors.New(result.Message)
 	}
@@ -81,7 +87,6 @@ func (m *Message) Send(args *Message) (*Response, error) {
 		return nil, err
 	}
 
-	now := time.Now().In(time.FixedZone("GMT", 0)).Format("2006-01-02T15:04:05Z")
 	data := &SendRequest{
 		AccessKeyID:   AccessKeyID,
 		Action:        "SendSms",
@@ -92,8 +97,8 @@ func (m *Message) Send(args *Message) (*Response, error) {
 		Request: Request{
 			Format:           "JSON",
 			Version:          "2017-05-25",
-			Timestamp:        now,
-			SignatureNonce:   imago.NewRandom().Text(32),
+			Timestamp:        time.Now().In(time.FixedZone("GMT", 0)).Format("2006-01-02T15:04:05Z"),
+			SignatureNonce:   random.RandString(32),
 			SignatureMethod:  "HMAC-SHA1",
 			SignatureVersion: "1.0",
 			RegionID:         "cn-hangzhou",
@@ -104,13 +109,15 @@ func (m *Message) Send(args *Message) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	sign := NewSMS().Sign(signURL)
 	signURL.Add("Signature", sign)
 
-	body, err = fetch.Cmd(&fetch.Request{
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: fmt.Sprintf("https://dysmsapi.aliyuncs.com?%s", signURL.Encode()),
 		Method: "POST",
-		URL:    "https://dysmsapi.aliyuncs.com?" + signURL.Encode(),
-		Header: http.Header{
+		Headers: http.Header{
 			"Content-Type": []string{"application/json"},
 		},
 	})
@@ -119,10 +126,11 @@ func (m *Message) Send(args *Message) (*Response, error) {
 	}
 
 	result := SendResponse{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
+
 	if result.Code != "OK" {
 		return nil, errors.New(result.Message)
 	}

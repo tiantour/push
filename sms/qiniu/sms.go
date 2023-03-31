@@ -3,8 +3,8 @@ package qiniu
 import (
 	"net/url"
 
-	"github.com/tiantour/fetch"
-	"github.com/tiantour/rsae"
+	"github.com/duke-git/lancet/v2/cryptor"
+	"github.com/duke-git/lancet/v2/netutil"
 )
 
 // SMS sms
@@ -16,8 +16,8 @@ func NewSMS() *SMS {
 }
 
 // Sign sms sign
-func (s *SMS) Sign(args *fetch.Request) (string, error) {
-	u, err := url.Parse(args.URL)
+func (s *SMS) Sign(args *netutil.HttpRequest) (string, error) {
+	u, err := url.Parse(args.RawURL)
 	if err != nil {
 		return "", err
 	}
@@ -34,7 +34,7 @@ func (s *SMS) Sign(args *fetch.Request) (string, error) {
 	data += "\nHost: " + u.Host
 
 	// 4. 添加 Content-Type，前提: Content-Type 存在且不为空
-	ctType := args.Header.Get("Content-Type")
+	ctType := args.Headers.Get("Content-Type")
 	if ctType != "" {
 		data += "\nContent-Type: " + ctType
 	}
@@ -44,13 +44,13 @@ func (s *SMS) Sign(args *fetch.Request) (string, error) {
 
 	// 6. 添加 Body，前提: Content-Length 存在且 Body 不为空，
 	// 同时 Content-Type 存在且不为空或 "application/octet-stream"
-	ctLength := args.Header.Get("Content-Length")
+	ctLength := args.Headers.Get("Content-Length")
 	if ctLength != "" && len(args.Body) != 0 {
 		if ctType != "" && ctType != "application/octet-stream" {
 			data += string(args.Body)
 		}
 	}
 
-	body := rsae.NewSHA().HmacSha1(data, SecretKey)
-	return rsae.NewBase64().Encode(body), nil
+	str := cryptor.HmacSha1(data, SecretKey)
+	return cryptor.Base64StdEncode(str), nil
 }

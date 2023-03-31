@@ -1,13 +1,12 @@
 package alipay
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
+	"github.com/duke-git/lancet/v2/datetime"
+	"github.com/duke-git/lancet/v2/netutil"
 	"github.com/google/go-querystring/query"
-	"github.com/tiantour/fetch"
-	"github.com/tiantour/tempo"
 )
 
 // Message message
@@ -26,18 +25,21 @@ func (m *Message) MI(content string) (*Response, error) {
 		Format:     "JSON",
 		Charset:    "utf-8",
 		SignType:   "RSA2",
-		TimeStamp:  tempo.NewNow().String(),
+		TimeStamp:  datetime.GetNowDateTime(),
 		Version:    "1.0",
 		BizContent: content,
 	}
+
 	signURL, err := query.Values(args)
 	if err != nil {
 		return nil, err
 	}
+
 	sign, err := NewToken().Sign(signURL, PrivatePath)
 	if err != nil {
 		return nil, err
 	}
+
 	signURL.Add("sign", sign)
 	result, err := m.do(fmt.Sprintf("https://openapi.alipay.com/gateway.do?%s",
 		signURL.Encode()),
@@ -45,6 +47,7 @@ func (m *Message) MI(content string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	response := result.AlipayOpenAppMiniTemplateMessageSendResponse
 	if response.Code != "10000" {
 		return nil, errors.New(response.Msg)
@@ -54,15 +57,17 @@ func (m *Message) MI(content string) (*Response, error) {
 
 // do message do
 func (m *Message) do(url string) (*Result, error) {
-	body, err := fetch.Cmd(&fetch.Request{
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: url,
 		Method: "GET",
-		URL:    url,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	result := Result{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}

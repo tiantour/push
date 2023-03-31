@@ -1,16 +1,16 @@
 package alipay
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 
+	"github.com/duke-git/lancet/v2/cryptor"
+	"github.com/duke-git/lancet/v2/datetime"
+	"github.com/duke-git/lancet/v2/netutil"
 	"github.com/google/go-querystring/query"
-	"github.com/tiantour/fetch"
-	"github.com/tiantour/imago"
 	"github.com/tiantour/rsae"
-	"github.com/tiantour/tempo"
 )
 
 // Token token
@@ -29,32 +29,37 @@ func (t *Token) Access(code string) (*Response, error) {
 		Format:    "JSON",
 		Charset:   "utf-8",
 		SignType:  "RSA2",
-		TimeStamp: tempo.NewNow().String(),
+		TimeStamp: datetime.GetNowDateTime(),
 		Version:   "1.0",
 		GrantType: "authorization_code",
 		Code:      code,
 	}
+
 	signURL, err := query.Values(args)
 	if err != nil {
 		return nil, err
 	}
+
 	sign, err := t.Sign(signURL, PrivatePath)
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("https://openapi.alipay.com/gateway.do?%s", sign)
-	body, err := fetch.Cmd(&fetch.Request{
+
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: fmt.Sprintf("https://openapi.alipay.com/gateway.do?%s", sign),
 		Method: "GET",
-		URL:    url,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	result := Result{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
+
 	response := result.AlipaySystemOauthTokenResponse
 	if response.Code != "10000" {
 		return nil, errors.New(response.Msg)
@@ -68,9 +73,12 @@ func (t *Token) Sign(args url.Values, privatePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	privateKey, err := imago.NewFile().Read(privatePath)
+
+	privateKey, err := os.ReadFile(privatePath)
 	if err != nil {
 		return "", err
 	}
+
+	cryptor.RsaDecrypt([]byte{}, "rsa_private.pem")
 	return rsae.NewRSA().Sign(query, privateKey)
 }

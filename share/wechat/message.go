@@ -1,14 +1,13 @@
 package wechat
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/url"
-	"time"
 
+	"github.com/duke-git/lancet/v2/cryptor"
+	"github.com/duke-git/lancet/v2/datetime"
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/google/go-querystring/query"
-	"github.com/tiantour/imago"
-	"github.com/tiantour/rsae"
 )
 
 // Message message
@@ -35,19 +34,22 @@ func (m *Message) Share(path string) (*Message, error) {
 
 	result := &Message{
 		AppID:       AppID,
-		Noncestr:    imago.NewRandom().Text(16),
-		Timestamp:   fmt.Sprintf("%d", time.Now().Unix()),
+		Noncestr:    random.RandString(16),
+		Timestamp:   fmt.Sprintf("%d", datetime.NewUnixNow().ToUnix()),
 		URL:         path,
 		JSapiTicket: ticket,
 	}
+
 	signURL, err := query.Values(result)
 	if err != nil {
 		return nil, err
 	}
+
 	sign, err := m.sign(signURL)
 	if err != nil {
 		return nil, err
 	}
+
 	result.Signature = sign
 
 	return result, nil
@@ -59,6 +61,6 @@ func (m *Message) sign(args url.Values) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	body := rsae.NewSHA().SHA1(query)
-	return hex.EncodeToString(body), nil
+
+	return cryptor.Sha1(query), nil
 }

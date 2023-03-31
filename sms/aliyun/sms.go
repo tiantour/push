@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/tiantour/rsae"
+	"github.com/duke-git/lancet/v2/cryptor"
 )
 
 // SMS sms
@@ -24,6 +24,7 @@ func (s *SMS) Sign(args url.Values) string {
 	query = strings.Replace(query, "%7E", "~", -1)
 	query = fmt.Sprintf("POST&%s&%s", url.QueryEscape("/"), url.QueryEscape(query))
 
-	body := rsae.NewSHA().HmacSha1(query, AccessKeySecret+"&")
-	return rsae.NewBase64().Encode(body)
+	str := cryptor.HmacSha1(query, AccessKeySecret+"&")
+	return cryptor.Base64StdEncode(str)
+
 }

@@ -1,12 +1,12 @@
 package wechat
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/tiantour/cache"
-	"github.com/tiantour/fetch"
+	"github.com/duke-git/lancet/v2/netutil"
+	"github.com/tiantour/push/x/cache"
 )
 
 // Ticket ticket
@@ -24,48 +24,42 @@ func NewTicket() *Ticket {
 
 // JSAPI jsapi ticket
 func (t *Ticket) JSAPI() (string, error) {
-	result, err := t.Cache()
-	if err != nil || result == "" {
-		ticket, err := t.Network()
-		if err != nil {
-			return "", err
-		}
-
-		result = ticket.Ticket
-		key := fmt.Sprintf("string:data:bind:jsapi:ticket:%s", AppID)
-		_ = cache.NewString().SET(nil, key, result, "EX", 7200)
+	token, ok := cache.NewString().Get(AppID)
+	if ok && token != "" {
+		return token.(string), nil
 	}
-	return result, nil
+
+	result, err := t.Get()
+	if err != nil {
+		return "", err
+	}
+
+	_ = cache.NewString().Set(AppID, result.Ticket, 1, 7200*time.Second)
+	return result.Ticket, nil
 }
 
-// Cache get ticket from cache
-func (t *Ticket) Cache() (string, error) {
-	var result string
-	key := fmt.Sprintf("string:data:bind:jsapi:ticket:%s", AppID)
-	err := cache.NewString().GET(&result, key)
-	return result, err
-}
-
-// Network get ticket form network
-func (t *Ticket) Network() (*Ticket, error) {
+// Get get ticket
+func (t *Ticket) Get() (*Ticket, error) {
 	token, err := NewToken().Access()
 	if err != nil {
 		return nil, err
 	}
-	body, err := fetch.Cmd(&fetch.Request{
+
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi", token),
 		Method: "GET",
-		URL: fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi",
-			token,
-		),
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	result := Ticket{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
+
 	if result.ErrCode != 0 {
 		return nil, errors.New(result.ErrMsg)
 	}

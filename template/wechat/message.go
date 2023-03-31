@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tiantour/fetch"
+	"github.com/duke-git/lancet/v2/netutil"
 )
 
 // Message message
@@ -25,6 +25,7 @@ func (m *Message) MI(args *MI) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return m.do(args, fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=%s",
 		token),
 	)
@@ -36,6 +37,7 @@ func (m *Message) MP(args *MP) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=%s", token)
 	return m.do(args, url)
 }
@@ -46,9 +48,11 @@ func (m *Message) do(data interface{}, url string) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, err = fetch.Cmd(&fetch.Request{
+
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&netutil.HttpRequest{
+		RawURL: url,
 		Method: "POST",
-		URL:    url,
 		Body:   body,
 	})
 	if err != nil {
@@ -56,10 +60,11 @@ func (m *Message) do(data interface{}, url string) (*Message, error) {
 	}
 
 	result := Message{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
+
 	if result.ErrCode != 0 {
 		return nil, errors.New(result.ErrMsg)
 	}

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/duke-git/lancet/v2/datetime"
+	"github.com/duke-git/lancet/v2/netutil"
 	"github.com/google/go-querystring/query"
-	"github.com/tiantour/fetch"
-	"github.com/tiantour/tempo"
 )
 
 // Message message
@@ -30,49 +30,55 @@ func NewMessage() *Message {
 
 // Query query message
 func (m *Message) Query(args *Message) ([]*QueryMessage, error) {
-	start, err := tempo.NewString().Unix(fmt.Sprintf("%s 00:00:00", args.Date))
+	date, err := datetime.FormatStrToTime(args.Date, "yyyy-mm-dd")
 	if err != nil {
 		return nil, err
 	}
-	end, err := tempo.NewString().Unix(fmt.Sprintf("%s 23:59:59", args.Date))
-	if err != nil {
-		return nil, err
-	}
+
 	requst := &QueryRequest{
 		Mobile:   args.Phone[0],
-		Start:    fmt.Sprintf("%d", start),
-		End:      fmt.Sprintf("%d", end),
+		Start:    fmt.Sprintf("%d", datetime.BeginOfDay(date).Unix()),
+		End:      fmt.Sprintf("%d", datetime.EndOfDay(date).Unix()),
 		Page:     args.Page + 1,
 		PageSize: args.Size,
 	}
+
 	signURL, err := query.Values(requst)
 	if err != nil {
 		return nil, err
 	}
 
 	body := []byte{}
-	header := http.Header{
-		"Content-Length": []string{fmt.Sprintf("%d", len(body))},
-		"Content-Type":   []string{"application/json"},
+
+	header := http.Header{}
+	header.Add("Content-Length", fmt.Sprintf("%d", len(body)))
+	header.Add("Content-Type", "application/json")
+
+	data := netutil.HttpRequest{
+		RawURL:  "https://sms.qiniuapi.com/v1/message?" + signURL.Encode(),
+		Method:  "GET",
+		Headers: header,
 	}
-	data := fetch.Request{
-		Method: "GET",
-		URL:    "https://sms.qiniuapi.com/v1/message?" + signURL.Encode(),
-		Header: header,
-	}
+
 	sign, err := NewSMS().Sign(&data)
 	if err != nil {
 		return nil, err
 	}
-	token := fmt.Sprintf("Qiniu %s:%s", SecretKey, sign)
-	header.Add("Authorization", token)
-	body, err = fetch.Cmd(&data)
+
+	data.Headers.Add("Authorization", fmt.Sprintf("Qiniu %s:%s", SecretKey, sign))
+
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&data)
 	if err != nil {
 		return nil, err
 	}
 
 	result := QueryResponse{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
+	if err != nil {
+		return nil, err
+	}
+
 	return result.Items, err
 }
 
@@ -83,21 +89,21 @@ func (m *Message) Send(args *Message) (*SendResponse, error) {
 		Parameters: args.Body,
 		TemplateID: args.Template,
 	}
+
 	body, err := json.Marshal(&request)
 	if err != nil {
 		return nil, err
 	}
 
-	header := http.Header{
-		"Content-Length": []string{fmt.Sprintf("%d", len(body))},
-		"Content-Type":   []string{"application/json"},
-	}
+	header := http.Header{}
+	header.Add("Content-Length", fmt.Sprintf("%d", len(body)))
+	header.Add("Content-Type", "application/json")
 
-	data := fetch.Request{
-		Method: "POST",
-		URL:    "https://sms.qiniuapi.com/v1/message",
-		Body:   body,
-		Header: header,
+	data := netutil.HttpRequest{
+		RawURL:  "https://sms.qiniuapi.com/v1/message",
+		Method:  "POST",
+		Headers: header,
+		Body:    body,
 	}
 
 	sign, err := NewSMS().Sign(&data)
@@ -110,16 +116,16 @@ func (m *Message) Send(args *Message) (*SendResponse, error) {
 	sign = strings.ReplaceAll(sign, "/", "_")
 
 	// AccessKey
-	token := fmt.Sprintf("Qiniu %s:%s", AccessKey, sign)
-	header.Add("Authorization", token)
+	data.Headers.Add("Authorization", fmt.Sprintf("Qiniu %s:%s", AccessKey, sign))
 
-	body, err = fetch.Cmd(&data)
+	client := netutil.NewHttpClient()
+	resp, err := client.SendRequest(&data)
 	if err != nil {
 		return nil, err
 	}
 
 	result := SendResponse{}
-	err = json.Unmarshal(body, &result)
+	err = client.DecodeResponse(resp, &result)
 	if err != nil {
 		return nil, err
 	}
